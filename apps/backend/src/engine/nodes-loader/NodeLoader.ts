@@ -1,10 +1,11 @@
-import { execSync } from 'child_process';
 import * as path from 'path';
 
 export class NodeLoader {
+  // Security fix: Disabled runtime NPM installation via execSync to prevent command injection.
+  // In a production system, this should be handled via a secure, sandboxed process
+  // or a pre-defined list of allowed packages.
   static installNodePackage(packageName: string) {
-    const nodesDir = path.join(__dirname, '../nodes');
-    execSync(`npm install ${packageName}`, { cwd: nodesDir });
+    throw new Error('Runtime node package installation is disabled for security reasons.');
   }
 
   static async loadNode(type: string) {

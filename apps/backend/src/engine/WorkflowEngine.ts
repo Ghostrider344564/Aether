@@ -54,7 +54,8 @@ export class WorkflowEngine {
   }
 
   private async loadNode(type: string, parameters: any): Promise<INode> {
-    const nodeClass = (await import(`./nodes/${type}`)).default;
+    const { NodeLoader } = await import('./nodes-loader/NodeLoader');
+    const nodeClass = await NodeLoader.loadNode(type);
     return new nodeClass(parameters);
   }
 }
