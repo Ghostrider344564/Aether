@@ -50,6 +50,8 @@ const WorkflowCanvas = () => {
   }, []);
 
   const handleAddNode = (type: string, nodeData: any) => {
+    // Add offset to prevent overlapping
+    const offset = nodes.length * 20;
     const newNode: Node = {
       id: Math.random().toString(36).substr(2, 9),
       type: 'custom',
@@ -57,9 +59,12 @@ const WorkflowCanvas = () => {
         label: nodeData.label,
         category: nodeData.category,
         icon: typeof nodeData.icon === 'string' ? nodeData.icon : undefined,
-        parameters: {}
+        iconColor: nodeData.iconColor,
+        parameters: {
+          options: []
+        }
       },
-      position: { x: 400, y: 300 },
+      position: { x: 400 + offset, y: 300 + offset },
     };
     setNodes((nds) => nds.concat(newNode));
     setShowLibrary(false);

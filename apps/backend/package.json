@@ -30,6 +30,7 @@
     "bullmq": "^5.76.6",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "expr-eval": "^2.0.2",
     "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "isolated-vm": "^6.1.2",

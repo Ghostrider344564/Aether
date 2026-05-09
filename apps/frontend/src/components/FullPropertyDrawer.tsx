@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Info, ExternalLink, ChevronDown } from 'lucide-react';
+import { X, Info, ExternalLink, ChevronDown, Globe, Database, MessageSquare, Box, Cpu, MessageCircle, Zap, Wand2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 
 interface FullPropertyDrawerProps {
@@ -17,7 +17,18 @@ const FullPropertyDrawer: React.FC<FullPropertyDrawerProps> = ({ node, onClose, 
       <header className="h-14 border-b border-midnight-700 flex items-center justify-between px-4 bg-midnight-900/50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded bg-midnight-700 flex items-center justify-center text-white">
-            {node.data.icon || <div className="w-4 h-4 border-2 border-current rounded-full" />}
+             {typeof node.data.icon === 'string' ? (
+                <div className={node.data.iconColor}>
+                   {node.data.icon === 'Globe' && <Globe size={16} />}
+                   {node.data.icon === 'Database' && <Database size={16} />}
+                   {node.data.icon === 'MessageSquare' && <MessageSquare size={16} />}
+                   {node.data.icon === 'Box' && <Box size={16} />}
+                   {node.data.icon === 'Cpu' && <Cpu size={16} />}
+                   {node.data.icon === 'MessageCircle' && <MessageCircle size={16} />}
+                   {node.data.icon === 'Zap' && <Zap size={16} />}
+                   {node.data.icon === 'Wand2' && <Wand2 size={16} />}
+                </div>
+             ) : (node.data.icon || <Box size={16} />)}
           </div>
           <h2 className="font-bold text-white">{node.data.label}</h2>
           <div className="flex items-center gap-1 ml-4 px-2 py-0.5 rounded bg-midnight-700 text-midnight-400 cursor-pointer hover:bg-midnight-600">
@@ -123,10 +134,36 @@ return $input.all();"
                <div className="flex items-center justify-between mb-2">
                  <label className="block text-xs font-bold text-midnight-400 uppercase">Options</label>
                </div>
-               <div className="p-4 border border-dashed border-midnight-700 rounded text-center text-xs text-midnight-500 mb-2">
-                 No properties
+               <div className="space-y-2">
+                 {(node.data.parameters?.options || []).map((opt: any, idx: number) => (
+                   <div key={idx} className="bg-midnight-900/50 p-3 rounded-lg border border-midnight-700 flex items-center justify-between">
+                     <span className="text-sm text-white">{opt.label || 'New Option'}</span>
+                     <button
+                       onClick={() => {
+                         const newOptions = [...(node.data.parameters.options || [])];
+                         newOptions.splice(idx, 1);
+                         onUpdate({ ...node, data: { ...node.data, parameters: { ...node.data.parameters, options: newOptions } } });
+                       }}
+                       className="text-midnight-500 hover:text-red-400"
+                     >
+                       <X size={14} />
+                     </button>
+                   </div>
+                 ))}
+
+                 {(!node.data.parameters?.options || node.data.parameters.options.length === 0) && (
+                   <div className="p-4 border border-dashed border-midnight-700 rounded text-center text-xs text-midnight-500 mb-2">
+                     No options selected
+                   </div>
+                 )}
                </div>
-               <button className="w-full py-2 bg-midnight-900 border border-midnight-700 rounded flex items-center justify-center gap-2 text-xs font-bold text-midnight-100 hover:bg-midnight-800">
+               <button
+                 onClick={() => {
+                    const newOptions = [...(node.data.parameters?.options || []), { label: 'Property ' + ((node.data.parameters?.options?.length || 0) + 1) }];
+                    onUpdate({ ...node, data: { ...node.data, parameters: { ...node.data.parameters, options: newOptions } } });
+                 }}
+                 className="w-full mt-2 py-2 bg-midnight-900 border border-midnight-700 rounded flex items-center justify-center gap-2 text-xs font-bold text-midnight-100 hover:bg-midnight-800 transition-colors"
+               >
                  Add Option <ChevronDown size={14} />
                </button>
             </div>

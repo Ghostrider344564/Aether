@@ -1,13 +1,27 @@
 import React from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Globe, Database, MessageSquare, Box, Cpu, MessageCircle, Zap, Wand2 } from 'lucide-react';
+
+const getIcon = (iconName: string, size: number, colorClass?: string) => {
+  switch (iconName) {
+    case 'Globe': return <Globe size={size} className={colorClass} />;
+    case 'Database': return <Database size={size} className={colorClass} />;
+    case 'MessageSquare': return <MessageSquare size={size} className={colorClass} />;
+    case 'Box': return <Box size={size} className={colorClass} />;
+    case 'Cpu': return <Cpu size={size} className={colorClass} />;
+    case 'MessageCircle': return <MessageCircle size={size} className={colorClass} />;
+    case 'Zap': return <Zap size={size} className={colorClass} />;
+    case 'Wand2': return <Wand2 size={size} className={colorClass} />;
+    default: return <Box size={size} className={colorClass} />;
+  }
+};
 
 export const CustomNode = ({ data, selected }: NodeProps) => {
   return (
-    <div className={`group relative min-w-[150px] rounded-xl bg-midnight-800 border-2 transition-all ${selected ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'border-midnight-700 hover:border-midnight-600'}`}>
-      <div className="p-3 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-midnight-700 flex items-center justify-center text-white">
-          {/* Default icon if none provided */}
-          {typeof data.icon === 'string' ? <span>{data.icon}</span> : (data.icon || <div className="w-5 h-5 border-2 border-current rounded-full" />)}
+    <div className={`group relative w-[220px] rounded-xl bg-midnight-800 border-2 transition-all ${selected ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'border-midnight-700 hover:border-midnight-600'}`}>
+      <div className="p-4 flex items-center gap-4">
+        <div className="w-10 h-10 min-w-[40px] rounded-xl bg-midnight-900 flex items-center justify-center text-white shadow-inner border border-midnight-700">
+          {typeof data.icon === 'string' ? getIcon(data.icon, 20, data.iconColor) : (data.icon || <Box size={20} />)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-bold text-midnight-400 uppercase tracking-wider">{data.category || 'Node'}</div>
