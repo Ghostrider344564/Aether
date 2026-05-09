@@ -9,7 +9,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
   const workflowRepository = AppDataSource.getRepository(Workflow);
   const executionRepository = AppDataSource.getRepository(Execution);
 
-  const workflow = await workflowRepository.findOne({ where: { id: workflowId } });
+  const workflow = await workflowRepository.findOne({ where: { id: String(workflowId) } });
   if (!workflow) {
     return res.status(404).json({ error: "Workflow not found" });
   }

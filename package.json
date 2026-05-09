@@ -15,5 +15,8 @@
   "devDependencies": {
     "turbo": "latest",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "isolated-vm": "^6.1.2"
   }
 }

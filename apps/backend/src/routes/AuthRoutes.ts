@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { AppDataSource } from '../data-source';
 import { User } from '../entities/User';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { authMiddleware } from '../middleware/AuthMiddleware';
 
 const router = Router();
 

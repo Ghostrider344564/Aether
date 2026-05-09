@@ -1,132 +1,215 @@
-import React, { useState, useCallback } from 'react';
-import ReactFlow, {
-  addEdge,
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  ReactFlow,
   Background,
-  Controls,
-  Connection,
-  Edge,
-  Node,
-  applyEdgeChanges,
+  BackgroundVariant,
+  addEdge,
   applyNodeChanges,
-  NodeChange,
-  EdgeChange,
+  applyEdgeChanges,
+  Node,
+  Edge,
+  OnNodesChange,
+  OnEdgesChange,
   OnConnect
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import PropertyPanel from './PropertyPanel.tsx';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import Sidebar from './Sidebar';
+import FullPropertyDrawer from './FullPropertyDrawer';
 import NodeLibrary from './NodeLibrary';
+import { CustomNode } from './CustomNode';
 import { workflowApi } from '../services/api';
-
-const initialNodes: Node[] = [
-  { id: '1', type: 'start', data: { label: 'Start' }, position: { x: 250, y: 50 } },
-];
-
-const initialEdges: Edge[] = [];
+import { Plus, Wand2, History, Star, Maximize, ZoomIn, ZoomOut, Pin, Play } from 'lucide-react';
 
 const WorkflowCanvas = () => {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [darkMode, setDarkMode] = useState(true);
-  const [showLibrary, setShowLibrary] = useState(false);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [workflowName] = useState('My workflow');
+  const [showLibrary, setShowLibrary] = useState(false);
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+  const nodeTypes = useMemo(() => ({
+    custom: CustomNode,
+  }), []);
+
+  const onNodesChange: OnNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     []
   );
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+  const onEdgesChange: OnEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
   const onConnect: OnConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true }, eds)),
     []
   );
 
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((event: any, node: Node) => {
     setSelectedNode(node);
   }, []);
 
-  const onPaneClick = useCallback(() => {
-    setSelectedNode(null);
-  }, []);
-
-  const handleSave = async () => {
-    try {
-      if (!workflowId) {
-        const res = await workflowApi.create('My New Workflow');
-        setWorkflowId(res.data.id);
-        await workflowApi.save(res.data.id, { nodes, connections: edges });
-      } else {
-        await workflowApi.save(workflowId, { nodes, connections: edges });
-      }
-      alert('Workflow saved successfully!');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to save workflow. Ensure backend is running and you are logged in.');
-    }
-  };
-
-  const addNode = (type: string) => {
+  const handleAddNode = (type: string, nodeData: any) => {
     const newNode: Node = {
       id: Math.random().toString(36).substr(2, 9),
-      type,
-      data: { label: type.charAt(0).toUpperCase() + type.slice(1), parameters: {} },
-      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      type: 'custom',
+      data: {
+        label: nodeData.label,
+        category: nodeData.category,
+        icon: typeof nodeData.icon === 'string' ? nodeData.icon : undefined,
+        parameters: {}
+      },
+      position: { x: 400, y: 300 },
     };
     setNodes((nds) => nds.concat(newNode));
+    setShowLibrary(false);
   };
 
+  const isEmpty = nodes.length === 0;
+
   return (
-    <div className={`h-screen w-screen ${darkMode ? 'dark' : ''}`}>
-      <div className="flex h-full flex-col bg-white dark:bg-midnight-900 text-midnight-900 dark:text-white">
-        <header className="flex h-12 items-center justify-between border-b border-midnight-200 dark:border-midnight-700 px-4">
-          <div className="flex items-center gap-2">
-             <div className="w-6 h-6 bg-blue-600 rounded-sm flex items-center justify-center font-bold text-xs text-white">A</div>
-             <span className="font-bold">Aether</span>
+    <div className="h-screen w-screen bg-midnight-900 flex overflow-hidden font-sans selection:bg-indigo-500/30">
+      <Sidebar />
+
+      <main className="flex-1 flex flex-col relative overflow-hidden">
+        {/* Top Header */}
+        <header className="h-14 border-b border-midnight-800 flex items-center justify-between px-6 bg-midnight-900/50 backdrop-blur-md z-10">
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2 text-midnight-400 text-sm">
+                <UserIcon size={14} />
+                <span>Personal</span>
+                <span className="text-midnight-600">/</span>
+                <span className="font-bold text-white">{workflowName}</span>
+                <span className="ml-2 text-midnight-600 hover:text-midnight-400 cursor-pointer">+ Add tag</span>
+             </div>
           </div>
-          <div className="flex gap-4 items-center">
-             <button onClick={handleSave} className="bg-green-600 px-3 py-1 rounded text-xs text-white font-bold">Save</button>
-             <button onClick={() => setShowLibrary(true)} className="bg-blue-600 px-3 py-1 rounded text-xs text-white font-bold">+ Add Node</button>
-             <button className="text-sm text-midnight-400 hover:text-white">Executions</button>
-             <button className="text-sm text-midnight-400 hover:text-white">Credentials</button>
-             <button
-               onClick={() => setDarkMode(!darkMode)}
-               className="rounded-md bg-midnight-200 dark:bg-midnight-800 px-3 py-1 text-xs"
-             >
-               {darkMode ? 'Light' : 'Dark'}
-             </button>
+
+          <div className="flex items-center gap-4">
+             {/* Mode Selector */}
+             <div className="flex bg-midnight-800 p-1 rounded-lg border border-midnight-700">
+                <button className="px-4 py-1.5 text-xs font-bold rounded-md bg-midnight-700 text-white shadow-sm transition-all">Editor</button>
+                <button className="px-4 py-1.5 text-xs font-bold rounded-md text-midnight-400 hover:text-white transition-all">Executions</button>
+                <button className="px-4 py-1.5 text-xs font-bold rounded-md text-midnight-400 hover:text-white transition-all">Evaluations</button>
+             </div>
+
+             <div className="flex items-center gap-2 ml-4">
+                <button className="px-4 py-2 bg-midnight-800 hover:bg-midnight-700 text-white text-xs font-bold rounded-lg border border-midnight-700 transition-all">
+                  Publish
+                </button>
+                <div className="w-px h-6 bg-midnight-800" />
+                <History size={18} className="text-midnight-400 cursor-pointer hover:text-white" />
+                <button className="flex items-center gap-2 px-4 py-2 bg-midnight-800 hover:bg-midnight-700 text-white text-xs font-bold rounded-lg border border-midnight-700 transition-all">
+                   <Star size={14} className="text-yellow-500 fill-current" />
+                   Star
+                   <span className="ml-1 px-1.5 py-0.5 rounded bg-midnight-900 text-[10px]">186,907</span>
+                </button>
+             </div>
           </div>
         </header>
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 relative">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={onNodeClick}
-              onPaneClick={onPaneClick}
-              fitView
-            >
-              <Background color={darkMode ? "#27272a" : "#ddd"} gap={20} />
-              <Controls />
-            </ReactFlow>
+
+        {/* Canvas Area */}
+        <div className="flex-1 relative bg-midnight-900 overflow-hidden">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            nodeTypes={nodeTypes}
+            fitView
+          >
+            <Background color="#1e1e21" variant={BackgroundVariant.Dots} gap={20} size={1} />
+          </ReactFlow>
+
+          {/* Empty State Overlay */}
+          {isEmpty && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="flex items-center gap-12 pointer-events-auto">
+                  <EmptyStateButton
+                    label="Add first step..."
+                    onClick={() => setShowLibrary(true)}
+                  />
+                  <div className="text-midnight-600 font-bold text-sm uppercase tracking-widest">or</div>
+                  <EmptyStateButton
+                    label="Build with AI"
+                    onClick={() => alert('AI Builder coming soon!')}
+                    primary
+                  />
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Left Toolbar */}
+          <div className="absolute bottom-12 left-6 flex gap-2 pointer-events-auto z-10">
+              <ToolbarButton><Maximize size={18} /></ToolbarButton>
+              <ToolbarButton><ZoomIn size={18} /></ToolbarButton>
+              <ToolbarButton><ZoomOut size={18} /></ToolbarButton>
+              <ToolbarButton><Pin size={18} /></ToolbarButton>
           </div>
-          <PropertyPanel
-            selectedNode={selectedNode}
+
+          {/* Bottom Right Execution Bar */}
+          <div className="absolute bottom-12 right-6 z-20">
+              <button className="flex items-center gap-3 px-8 py-3.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full shadow-[0_8px_25px_rgba(239,68,68,0.4)] transition-all active:scale-95 group">
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Play size={14} className="fill-current ml-0.5" />
+                </div>
+                Execute Workflow
+              </button>
+          </div>
+
+          {/* Logs Panel Handle (Bottom) */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 border-t border-midnight-800 bg-midnight-900 flex items-center px-6 justify-between cursor-n-resize hover:bg-midnight-800 transition-colors">
+             <span className="text-xs font-bold text-midnight-400">Logs</span>
+             <Maximize size={12} className="text-midnight-500" />
+          </div>
+        </div>
+
+        {selectedNode && (
+          <FullPropertyDrawer
+            node={selectedNode}
+            onClose={() => setSelectedNode(null)}
             onUpdate={(updatedNode) => {
                setNodes((nds) => nds.map((n) => n.id === updatedNode.id ? updatedNode : n));
                setSelectedNode(updatedNode);
             }}
           />
-        </div>
-        {showLibrary && <NodeLibrary onAddNode={addNode} onClose={() => setShowLibrary(false)} />}
-      </div>
+        )}
+
+          {showLibrary && (
+            <NodeLibrary
+              onAddNode={handleAddNode}
+              onClose={() => setShowLibrary(false)}
+            />
+          )}
+      </main>
     </div>
   );
 };
+
+const EmptyStateButton = ({ label, onClick, primary = false }: any) => (
+  <button
+    onClick={onClick}
+    className={`flex flex-col items-center gap-4 transition-all hover:scale-105 active:scale-95 group`}
+  >
+    <div className={`w-24 h-24 rounded-3xl border-2 border-dashed flex items-center justify-center transition-all ${primary ? 'border-indigo-500/50 bg-indigo-500/5 text-indigo-400 group-hover:border-indigo-500 group-hover:bg-indigo-500/10' : 'border-midnight-700 bg-midnight-800/50 text-midnight-400 group-hover:border-midnight-500 group-hover:text-white'}`}>
+       {primary ? <Wand2 size={32} /> : <Plus size={32} />}
+    </div>
+    <span className={`text-sm font-bold ${primary ? 'text-indigo-400 group-hover:text-indigo-300' : 'text-midnight-400 group-hover:text-white'}`}>{label}</span>
+  </button>
+);
+
+const ToolbarButton = ({ children }: any) => (
+  <button className="w-10 h-10 bg-midnight-800 border border-midnight-700 rounded-lg flex items-center justify-center text-midnight-400 hover:bg-midnight-700 hover:text-white transition-all shadow-lg">
+    {children}
+  </button>
+);
+
+const UserIcon = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
 
 export default WorkflowCanvas;

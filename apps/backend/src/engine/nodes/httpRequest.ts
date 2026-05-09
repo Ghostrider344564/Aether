@@ -18,7 +18,7 @@ export default class HttpRequestNode implements INode {
     });
 
     // Check if response is binary
-    const contentType = response.headers['content-type'];
+    const contentType = String(response.headers['content-type'] || '');
     if (contentType && (contentType.includes('image') || contentType.includes('application/octet-stream'))) {
       const { BinaryDataService } = await import('../../services/BinaryDataService');
       const fileId = await BinaryDataService.save(Buffer.from(response.data), 'downloaded_file', contentType);

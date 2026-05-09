@@ -1,20 +1,37 @@
 import { INode } from "../WorkflowEngine";
-import * as vm from 'vm';
+import ivm from 'isolated-vm';
 
 export default class CodeNode implements INode {
   constructor(private parameters: any) {}
 
-  async execute(input: any, context: any): Promise<any> {
+  async execute(input: any, executionContext: any): Promise<any> {
     const code = this.parameters.jsCode || 'return item;';
 
-    const script = new vm.Script(`(async (item) => { ${code} })(item)`);
-    const context = vm.createContext({
-      console,
-      Buffer,
-      item: input,
-    });
-    const result = await script.runInContext(context, { timeout: 5000 });
+    // Create a new isolate with a 128MB memory limit
+    const isolate = new ivm.Isolate({ memoryLimit: 128 });
+    const context = isolate.createContextSync();
+    const jail = context.global;
 
-    return result;
+    // Set up global object for the script
+    jail.setSync('global', jail.derefInto());
+
+    // Serialize input data
+    const inputTransferable = new ivm.ExternalCopy(input).copyInto();
+    jail.setSync('item', inputTransferable);
+
+    // Prepare and run the script
+    const script = isolate.compileScriptSync(`
+      (async function() {
+        const item = JSON.parse(JSON.stringify(global.item));
+        ${code}
+      })()
+    `);
+
+    try {
+      const result = await script.run(context, { timeout: 5000 });
+      return result;
+    } finally {
+      isolate.dispose();
+    }
   }
 }
