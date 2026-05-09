@@ -36,4 +36,11 @@ router.post('/login', async (req, res) => {
   res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
 });
 
+router.get('/me', authMiddleware, async (req: any, res) => {
+  const userRepository = AppDataSource.getRepository(User);
+  const user = await userRepository.findOne({ where: { id: req.user.id } });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({ user: { id: user.id, email: user.email, role: user.role } });
+});
+
 export default router;

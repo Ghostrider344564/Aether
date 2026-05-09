@@ -6,3 +6,10 @@ build
 .turbo
 coverage
 .DS_Store
+# TypeScript build artifacts
+apps/backend/src/**/*.js
+apps/backend/src/**/*.js.map
+apps/backend/src/**/*.d.ts
+apps/backend/src/**/*.d.ts.map
+apps/backend/*.js
+apps/backend/*.js.map

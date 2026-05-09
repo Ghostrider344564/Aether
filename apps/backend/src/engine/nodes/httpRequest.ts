@@ -14,8 +14,23 @@ export default class HttpRequestNode implements INode {
       method,
       url,
       data: body,
+      responseType: 'arraybuffer',
     });
 
-    return response.data;
+    // Check if response is binary
+    const contentType = response.headers['content-type'];
+    if (contentType && (contentType.includes('image') || contentType.includes('application/octet-stream'))) {
+      const { BinaryDataService } = await import('../../services/BinaryDataService');
+      const fileId = await BinaryDataService.save(Buffer.from(response.data), 'downloaded_file', contentType);
+      return { fileId, contentType, info: 'File saved to BinaryDataService' };
+    }
+
+    // Default to JSON if possible
+    try {
+      const json = JSON.parse(response.data.toString());
+      return json;
+    } catch (e) {
+      return response.data.toString();
+    }
   }
 }

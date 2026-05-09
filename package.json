@@ -1,6 +1,7 @@
 {
   "name": "aether",
   "private": true,
+  "packageManager": "npm@9.0.0",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",

@@ -49,4 +49,17 @@ router.put('/:id', authMiddleware, async (req: any, res) => {
   res.json(workflow);
 });
 
+// Get a single workflow
+router.get('/:id', authMiddleware, async (req: any, res) => {
+  const { id } = req.params;
+  const workflowRepository = AppDataSource.getRepository(Workflow);
+
+  const workflow = await workflowRepository.findOne({
+    where: { id, owner: { id: req.user.id } }
+  });
+
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json(workflow);
+});
+
 export default router;
