@@ -1,4 +1,4 @@
-# Aether - Full-Featured n8n Clone
+# Aether - Full-Featured 
 
 Aether is a high-fidelity, production-grade workflow automation platform inspired by n8n.
 
